@@ -24,9 +24,10 @@
 											<div class="scan-zone">
 												<b style="color:var(--accent)">🧾 ENTRÉE DE COURSES</b>
 												<div style="display: flex; gap: 10px; margin-top: 10px;">
-													<button onclick="document.getElementById('input-photo').click()" class="btn btn-accent" style="flex:1">📸 SCAN TICKET</button>
-													<button onclick="ouvrirEticket()" class="btn btn-accent" style="flex:1">📧 E-TICKET</button>
-												</div>
+    <button onclick="document.getElementById('input-photo').click()" class="btn btn-accent" style="flex:1">
+        📸 SCANNER UN TICKET
+    </button>
+</div>
 												<input type="file" id="input-photo" accept="image/*,application/pdf" capture="environment" style="display:none" onchange="scannerTicket(this)">
 												<div id="statut-scan" style="margin-top: 10px; font-size: 13px; font-weight: bold; text-align: center;"></div>
 											</div>
@@ -42,13 +43,23 @@
 									<div id="corps-recette"></div>
 								</div>
 											<div class="card" style="padding:15px; background: #f3e5f5; border: 2px solid var(--chef); margin-top:15px;">
-												<b style="color:var(--chef)">👨‍🍳 CHEF GEMINI 2.5 FLASH</b>
+												<b style="color:var(--chef)">👨‍🍳 Suggestion d'idée de repas par le chef</b>
 												<div style="display:flex; gap:5px; margin-top:10px;">
 													<input type="text" id="chef-prompt" placeholder="Une idée de recette ?" style="flex:1; padding:10px; border-radius:8px; border:1px solid #ddd;">
 													<button onclick="demanderAuChef()" class="btn btn-mur" style="width:60px; margin:0">GO</button>
 												</div>
 												<div id="recette-zone" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px;"></div>
 											</div>
+											
+<div id="recherche-container" style="margin: 10px 0; position: sticky; top: 0; background: white; z-index: 1000; padding: 10px;">
+    <input type="text" id="mon-filtre-texte" 
+           list="liste-suggestions" 
+           oninput="rechercherArticle()" 
+           placeholder="🔍 Tapez le nom d'un article..." 
+           style="width: 100%; padding: 12px; border: 2px solid #ed8936; border-radius: 25px; font-size: 16px;">
+    
+    <datalist id="liste-suggestions"></datalist>
+</div>
 
 											<div class="card" style="padding:15px; border: 1px solid #ddd; margin-top:15px;">
 												<b style="font-size:14px;">➕ AJOUT MANUEL</b>
@@ -56,10 +67,16 @@
 													<input type="text" id="add-nom" placeholder="Nom de l'article" style="padding:8px; border-radius:5px; border:1px solid #ccc;">
 													<div style="display:flex; gap:5px;">
 														<select id="add-emplacement" style="flex:1; padding:8px; border-radius:5px;">
-															<option value="FRIGO">Frigo</option><option value="PLACARD">Placard</option><option value="CONGELATEUR">Congélo</option><option value="ANIMAUX">Animaux</option><option value="HORS_CUISINE">Maison</option>
-														</select>
-														<input type="number" id="add-qte" value="1" style="width:50px; padding:8px; border-radius:5px;">
-													</div>
+    <option value="FRIGO">Frigo</option>
+    <option value="PLACARD">Placard</option>
+    <option value="CONGELATEUR">Congélo</option>
+    <option value="ANIMAUX">Animaux</option>
+    <option value="HORS_CUISINE">Maison</option>
+    <option value="SALLE_DE_BAIN">Salle de Bain</option>
+    <option value="AUTRES">Autres</option>
+</select>
+
+<input type="number" id="add-qte" value="1" style="width:50px; padding:8px; border-radius:5px;">
 													<button onclick="ajouterManuel()" class="btn btn-mur">ENREGISTRER</button>
 												</div>
 											</div>
@@ -88,6 +105,20 @@
 <div class="card"><button class="collapsible">❄️ CONGÉLATEUR</button><div class="content"><div id="list-Congélateur"></div></div></div>
 
 <div class="card"><button class="collapsible">🍝 PLACARD</button><div class="content"><div id="list-Placard"></div></div></div>
+
+<div class="card" style="border-left: 8px solid var(--animaux);">
+    <button class="collapsible">🚿 SALLE DE BAIN</button>
+    <div class="content">
+        <div id="list-SalleBain"></div>
+    </div>
+</div>
+
+<div class="card" style="border-left: 8px solid #718096;">
+    <button class="collapsible">📦 AUTRES & DIVERS</button>
+    <div class="content">
+        <div id="list-Autres"></div>
+    </div>
+</div>
 
 <div class="card" style="border-left: 8px solid var(--chef);">
     <button class="collapsible">📖 GRIMOIRE</button>
@@ -122,41 +153,80 @@
             </div>
     </div>
 </div>
-											<div style="display:none">
-												<input id="gKey" value="AIzaSyAGWj8wmzZHUClHcPJ3u7C_ZYABG1z5Mdo">
-												<input id="sUrl" value="https://ylguhodjcgistealluzy.supabase.co">
-												<input id="sKey" value="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlsZ3Vob2RqY2dpc3RlYWxsdXp5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2MjcxMDAsImV4cCI6MjA4NjIwMzEwMH0.0czapM1DeFs7T3pTrExUMUKUcyUHi3w-p_jKj6XkTUM">
-											</div>
+											
 
-								<script>
-										let monSupabase;
-										let recettesTemporaires = [];
-										const MODEL_25 = "gemini-2.5-flash"; 
+    <input id="sUrl" type="hidden" value="https://ylguhodjcgistealluzy.supabase.co">
+    <input id="sKey" type="hidden" value="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlsZ3Vob2RqY2dpc3RlYWxsdXp5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2MjcxMDAsImV4cCI6MjA4NjIwMzEwMH0.0czapM1DeFs7T3pTrExUMUKUcyUHi3w-p_jKj6XkTUM">
+</div>
 
-										window.onload = () => {
-											// 1. Initialisation de Supabase
-											monSupabase = window.supabase.createClient(
-												document.getElementById('sUrl').value, 
-												document.getElementById('sKey').value
-											);
+  <script>
+  let utilisateurActuel = localStorage.getItem('monFrigo_User');
 
-											// 2. Lancement des fonctions de chargement (une seule fois suffit !)
-											chargerTout(); 
-											chargerGrimoire(); 
-											chargerPlanning();
-											setupCollapsibles();
-										};
+if (!utilisateurActuel) {
+    utilisateurActuel = prompt("Bienvenue ! Entre ton nom ou un pseudo pour créer ton inventaire perso :");
+    if (utilisateurActuel) {
+        localStorage.setItem('monFrigo_User', utilisateurActuel);
+    }
+}
+    // --- VARIABLES GLOBALES ---
+    let monSupabase;
+    let recettesTemporaires = [];
+    let modeVocalActuel = ""; 
+    const MODEL_25 = "gemini-2.5-flash"; 
 
-										function setupCollapsibles() {
-											const coll = document.getElementsByClassName("collapsible");
-											for (let i = 0; i < coll.length; i++) {
-												coll[i].onclick = function() {
-													this.classList.toggle("active");
-													const content = this.nextElementSibling;
-													content.style.maxHeight = content.style.maxHeight ? null : content.scrollHeight + "px";
-												}
-											}
-										}
+   // --- 1. LE CERVEAU AU DÉMARRAGE (NETTOYÉ) ---
+window.onload = () => {
+    try {
+        // A. Initialisation de Supabase (Indispensable pour le stock)
+        const elUrl = document.getElementById('sUrl');
+        const elKey = document.getElementById('sKey');
+        
+        if (elUrl && elKey && elUrl.value !== "" && elKey.value !== "") {
+            monSupabase = window.supabase.createClient(elUrl.value, elKey.value);
+            console.log("✅ Supabase connecté.");
+        } else {
+            console.warn("⚠️ Attention : Supabase n'est pas configuré (URL ou Clé manquante).");
+        }
+
+        // B. Lancement du micro et des données
+        // On vérifie que les fonctions existent avant de les lancer
+        if (typeof setupVocal === "function") setupVocal();
+        if (typeof chargerTout === "function") chargerTout();
+        if (typeof chargerGrimoire === "function") chargerGrimoire();
+        if (typeof chargerPlanning === "function") chargerPlanning();
+        
+        // C. Initialisation du design
+        if (typeof setupCollapsibles === "function") setupCollapsibles();
+
+        console.log("🚀 Système prêt !");
+
+    } catch (err) {
+        console.error("Erreur critique au démarrage :", err);
+    }
+};
+
+   function setupCollapsibles() {
+    const coll = document.getElementsByClassName("collapsible");
+    for (let i = 0; i < coll.length; i++) {
+        coll[i].onclick = function() {
+            this.classList.toggle("active");
+            const content = this.nextElementSibling;
+            
+            if (content) {
+                // Si le menu est fermé (pas de hauteur ou hauteur 0)
+                if (!content.style.maxHeight || content.style.maxHeight === "0px") {
+                    // On lui donne sa hauteur réelle pour qu'il se déplie
+                    content.style.maxHeight = content.scrollHeight + "px";
+                    content.style.padding = "15px"; 
+                } else {
+                    // On le remet à zéro pour qu'il se replie
+                    content.style.maxHeight = "0px";
+                    content.style.padding = "0 15px";
+                }
+            }
+        };
+    }
+}
 
 								// ==========================================================
 								// 1. INITIALISATION DES VARIABLES
@@ -172,91 +242,100 @@
 								let recognition = (SpeechRecognition) ? new SpeechRecognition() : null;
 
 								// ==========================================================
-								// 2. FONCTION APPEL GEMINI
-								// ==========================================================
-								async function appelGemini(payload) {
-									const gKey = document.getElementById('gKey').value;
-									const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_25}:generateContent?key=${gKey}`;
-									const resp = await fetch(url, { 
-										method: 'POST', 
-										headers: {'Content-Type': 'application/json'}, 
-										body: JSON.stringify(payload) 
-									});
-									const d = await resp.json();
-									if (!d.candidates) throw new Error("Réponse vide de l'IA");
-									return d.candidates[0].content.parts[0].text;
-								}
-	// ==========================================================
-			// 3. CONFIGURATION DU BLOC VOCAL
-			// ==========================================================
-			if (recognition) {
-				recognition.lang = 'fr-FR';
-				recognition.continuous = false;
+async function appelGemini(message) {
+    const urlRelais = "https://gemini-relais.laurent235.workers.dev";
+    
+    // Si c'est du texte (vocal), on en fait un petit objet {prompt}
+    // Si c'est le payload du ticket, on l'envoie tel quel
+    const corps = (typeof message === 'string') ? { prompt: message } : message;
 
-				recognition.onresult = async (e) => { 
-					const phrase = e.results[0][0].transcript.toLowerCase();
-					const statut = document.getElementById('statut-vocal');
-					if (statut) statut.innerText = "💬 J'ai entendu : " + phrase;
+    const resp = await fetch(urlRelais, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(corps)
+    });
 
-					// --- 1. SÉCURITÉ STOP ---
-					if (phrase.includes("stop") || phrase.includes("annule")) {
-						window.speechSynthesis.cancel();
-						window.attenteChoixRecette = false;
-						faireParlerIA("D'accord.");
-						return;
-					}
+    const data = await resp.json();
+    if (data.error) throw new Error(data.error.message || "Erreur API");
+    return data.candidates[0].content.parts[0].text;
+}
+// --- 2. GESTION DU RÉSULTAT VOCAL ---
+recognition.onresult = async (e) => { 
+    const phrase = e.results[0][0].transcript.toLowerCase();
+    const statut = document.getElementById('statut-vocal');
+    if (statut) statut.innerText = "💬 J'ai entendu : " + phrase;
+    console.log("🎤 Phrase captée :", phrase);
 
-					// --- 2. SI ON ATTEND TON CHOIX (Écriture de la recette) ---
-		if (window.attenteChoixRecette) {
-			try {
-				if (statut) statut.innerText = "✍️ Le Chef rédige la recette...";
-                
-				// PROMPT MODIFIÉ POUR OBTENIR LE MÊME FORMAT QUE LE CHEF ÉCRIT
-				const promptRecette = `L'utilisateur a choisi : "${phrase}" parmi tes idées : ${window.dernieresPropositions}. 
-				Écris la recette détaillée. 
-				RÉPONDS UNIQUEMENT AU FORMAT JSON STRICTEMENT COMME CECI : 
-				[{"titre":"Nom du plat", "contenu":"Liste des ingrédients\\n\\n1. Étape 1\\n2. Étape 2..."}]`;
-				
-				const resultatBrut = await appelGemini({ contents: [{ parts: [{ text: promptRecette }] }] });
-				
-				// On découpe proprement le JSON pour éviter les erreurs
-				const jsonStr = resultatBrut.substring(resultatBrut.indexOf('['), resultatBrut.lastIndexOf(']') + 1);
-				
-				// On stocke dans LA MÊME variable que ton bouton classique
-				recettesTemporaires = JSON.parse(jsonStr);
-				
-				// On injecte le MÊME design (la carte avec le bouton SAUVER)
-				const zone = document.getElementById('zone-recette');
-				if (zone) {
-					zone.innerHTML = recettesTemporaires.map((r, i) => `
-						<div style="background:white; padding:12px; border-radius:12px; border:1px solid #ddd; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-top: 15px;">
-							<b style="color:var(--chef); font-size:14px;">${r.titre}</b>
-							<p style="font-size:12px; margin:10px 0; color:#555; white-space: pre-wrap;">${r.contenu}</p>
-							<button onclick="sauverRecetteDirect(${i})" style="width:100%; background:var(--mur); color:white; border:none; padding:8px; border-radius:8px; cursor:pointer; font-weight:bold;">💾 SAUVER</button>
-						</div>`).join('');
-					zone.style.display = "block";
-				}
-				
-				window.attenteChoixRecette = false;
-				faireParlerIA("C'est prêt ! Je t'ai affiché la recette, tu peux la sauvegarder dans ton grimoire.");
-			} catch (err) { 
-				console.error("Erreur de rendu recette :", err);
-				faireParlerIA("Mince, j'ai eu un petit souci pour formater la recette.");
-			}
-			return;
-		}
+    // --- SÉCURITÉ STOP ---
+    if (phrase.includes("stop") || phrase.includes("annule")) {
+        window.speechSynthesis.cancel();
+        window.attenteChoixRecette = false;
+        if (typeof faireParlerIA === "function") faireParlerIA("D'accord.");
+        return;
+    }
 
-		// --- 3. SI TU DEMANDES DES IDÉES (Lancement Chef) ---
-		if (phrase.includes("chef") || phrase.includes("propose") || phrase.includes("recette") || phrase.includes("mange") || phrase.includes("idées")) {
-			try {
-				if (statut) statut.innerText = "👨‍🍳 Le Chef réfléchit...";
-				
-				// On récupère le stock
-				const { data: produits } = await monSupabase.from('inventaire2').select('nom').neq('etat', 'Vide');
-				const liste = produits.map(p => p.nom).join(', ');
 
-				// TON PROMPT ADAPTÉ POUR LA VOIX
-				const promptChef = `
+    // --- 2. SI ON ATTEND TON CHOIX (Écriture de la recette) ---
+    if (window.attenteChoixRecette) {
+        try {
+            // 🛑 2a. LE DÉTECTEUR DE REFUS
+            if (phrase.includes("autre") || phrase.includes("aucun") || phrase.includes("bof") || phrase.includes("non") || phrase.includes("pas ça")) {
+                if (statut) statut.innerText = "🤔 Le Chef cherche de nouvelles idées...";
+                const { data: produits } = await monSupabase.from('inventaire2').select('*').neq('etat', 'Vide');
+                let liste = produits ? produits.map(p => p.nom).join(", ") : "";
+
+                const promptNouvellesIdees = `Tu es un Chef cuisinier. L'utilisateur n'a pas aimé tes idées précédentes et te dit : "${phrase}".
+            STOCK DISPONIBLE : ${liste}
+            Propose 3 NOUVELLES idées de plats, TOTALEMENT DIFFÉRENTES de ce que tu as déjà proposé.
+            Ne donne pas la recette, formule juste une phrase naturelle à l'oral avec 3 noms courts.
+            Termine obligatoirement ta réponse par : "Lequel te tente cette fois ?"`;
+
+
+                // Correction de l'appel (on envoie juste le texte comme prévu par le Worker)
+                const reponseChef = await appelGemini(promptNouvellesIdees);
+                window.dernieresPropositions = reponseChef; 
+                faireParlerIA(reponseChef);
+                return;
+            }
+
+            // 🍳 2b. LA RÉDACTION DE LA RECETTE (Si choix validé)
+            if (statut) statut.innerText = "✍️ Le Chef rédige la recette...";
+            const promptRecette = `L'utilisateur a choisi : "${phrase}" parmi tes idées : ${window.dernieresPropositions}. 
+        Écris la recette détaillée. 
+        RÉPONDS UNIQUEMENT AU FORMAT JSON STRICTEMENT COMME CECI : 
+        [{"titre":"Nom du plat", "contenu":"Liste des ingrédients\\n\\n1. Étape 1\\n2. Étape 2..."}]`;
+            
+            const resultatBrut = await appelGemini(promptRecette);
+            const jsonStr = resultatBrut.substring(resultatBrut.indexOf('['), resultatBrut.lastIndexOf(']') + 1);
+            recettesTemporaires = JSON.parse(jsonStr);
+            
+            const zone = document.getElementById('zone-recette');
+            if (zone) {
+                zone.innerHTML = recettesTemporaires.map((r, i) => `
+                    <div style="background:white; padding:12px; border-radius:12px; border:1px solid #ddd; margin-top: 15px;">
+                        <b style="color:var(--chef);">${r.titre}</b>
+                        <p style="white-space: pre-wrap;">${r.contenu}</p>
+                        <button onclick="sauverRecetteDirect(${i})" style="width:100%; background:var(--mur); color:white; padding:8px; border-radius:8px;">💾 SAUVER</button>
+                    </div>`).join('');
+                zone.style.display = "block";
+            }
+            window.attenteChoixRecette = false;
+            faireParlerIA("C'est prêt ! Je t'ai affiché la recette.");
+        } catch (err) { 
+            console.error("Erreur recette :", err);
+            faireParlerIA("Mince, j'ai eu un souci pour formater la recette.");
+        }
+        return;
+    }
+
+    // --- 3. SI TU DEMANDES DES IDÉES (Lancement Chef) ---
+    if (phrase.includes("chef") || phrase.includes("propose") || phrase.includes("recette") || phrase.includes("mange") || phrase.includes("idées")) {
+        try {
+            if (statut) statut.innerText = "👨‍🍳 Le Chef réfléchit...";
+            const { data: produits } = await monSupabase.from('inventaire2').select('nom').neq('etat', 'Vide');
+            const liste = produits.map(p => p.nom).join(', ');
+
+            const promptChef = `
 				Tu es un Chef cuisinier expert et pragmatique.
 				DEMANDE UTILISATEUR : "${phrase}"
 				STOCK DISPONIBLE : ${liste}
@@ -267,68 +346,112 @@
 				3. C'est l'étape de proposition : NE DONNE SURTOUT PAS la recette, ni les étapes, ni la liste des ingrédients.
 				4. Formule une phrase naturelle à l'oral pour proposer exactement 3 noms de plats courts et précis.
 				5. Termine OBLIGATOIREMENT ta réponse par : "Lequel te tente ?"`;
-				
-				// APPEL GEMINI
-				const idees = await appelGemini({ contents: [{ parts: [{ text: promptChef }] }] });
-				
-				window.dernieresPropositions = idees;
-				window.attenteChoixRecette = true;
-				
-				faireParlerIA(idees);
-			} catch (err) { 
-				console.error("ERREUR GEMINI :", err);
-				alert("L'IA ne répond pas.");
-			}
-			return;
-		}
-					// --- 4. CHOIX PRÉCIS PRODUIT ---
-					if (window.attenteChoixProduit) {
-						try {
-							const promptAffinement = `L'utilisateur a dit : "${phrase}". Parmi : ${JSON.stringify(window.produitsPossibles)}, lequel est le bon ? Réponds uniquement l'ID.`;
-							const textID = await appelGemini({ contents: [{ parts: [{ text: promptAffinement }] }] });
-							const idTrouve = parseInt(textID.trim().replace(/[^0-9]/g, ''));
-							if (idTrouve > 0) {
-								const p = window.produitsPossibles.find(x => x.id === idTrouve);
-								window.attenteChoixProduit = false;
-								await executerLogiqueSuppression(p); 
-							}
-						} catch (err) { console.error(err); }
-						return;
-					}
+            const idees = await appelGemini(promptChef);
+            
+            window.dernieresPropositions = idees;
+            window.attenteChoixRecette = true;
+            faireParlerIA(idees);
+        } catch (err) { console.error("Erreur Chef :", err); }
+        return;
+    }
+// --- 4. CHOIX PRÉCIS PRODUIT (Affinement si doublon) ---
+if (window.attenteChoixProduit) {
+    try {
+        // On prépare le prompt avec tes consignes d'origine
+        const promptAffinement = `L'utilisateur a dit : "${phrase}". Parmi cette liste : ${JSON.stringify(window.produitsPossibles)}, lequel est le bon ? Réponds uniquement l'ID numérique.`;
+        
+        // CORRECTION : On envoie juste le prompt (texte simple)
+        const textID = await appelGemini(promptAffinement);
+        
+        // On nettoie la réponse pour n'avoir que le chiffre
+        const idTrouve = parseInt(textID.trim().replace(/[^0-9]/g, ''));
+        
+        if (idTrouve > 0) {
+            const p = window.produitsPossibles.find(x => x.id === idTrouve);
+            if (p) {
+                window.attenteChoixProduit = false;
+                // On appelle ta fonction de suppression
+                await executerLogiqueSuppression(p); 
+            }
+        }
+    } catch (err) { 
+        console.error("Erreur affinement produit :", err); 
+    }
+    return; // On arrête là pour ne pas déclencher d'autres fonctions
+}
 
-					// --- 5. OUI/NON COURSES ---
-					if (window.attenteReponseIA) {
-						if (phrase.includes("oui") || phrase.includes("ajoute") || phrase.includes("vas-y")) {
-							const p = window.dernierProduitSupprime;
-							if (p) {
-								await monSupabase.from('inventaire2').update({ etat: 'Vide', quantite: 0 }).eq('id', p.id);
-								faireParlerIA("C'est fait, ajouté aux courses.");
-								if (typeof chargerTout === 'function') await chargerTout();
-							}
-						} else {
-							faireParlerIA("D'accord.");
-						}
-						window.attenteReponseIA = false;
-						return;
-					}
+// --- 5. OUI/NON COURSES (Confirmation finale) ---
+if (window.attenteReponseIA) {
+    // Pas besoin d'IA ici, c'est une détection directe dans la phrase
+    if (phrase.includes("oui") || phrase.includes("ajoute") || phrase.includes("vas-y") || phrase.includes("d'accord")) {
+        const p = window.dernierProduitSupprime;
+        if (p) {
+            try {
+                // Mise à jour Supabase
+                await monSupabase.from('inventaire2')
+                    .update({ etat: 'Vide', quantite: 0 })
+                    .eq('id', p.id);
+                
+                faireParlerIA("C'est fait, je l'ai ajouté à ta liste de courses.");
+                
+                // Rafraîchissement de l'affichage si la fonction existe
+                if (typeof chargerTout === 'function') await chargerTout();
+            } catch (err) {
+                console.error("Erreur Supabase courses :", err);
+            }
+        }
+    } else {
+        faireParlerIA("D'accord, je ne l'ajoute pas.");
+    }
+    // On referme le mode attente
+    window.attenteReponseIA = false;
+    return;
+}
+    // --- 4. AJOUT D'UN RESTE AU FRIGO ---
+    if (phrase.includes("frigo") && (phrase.includes("mis") || phrase.includes("ajoute") || phrase.includes("rangé"))) {
+        try {
+            const promptAjout = `Tu es un assistant qui note les restes dans un frigo.
+							Voici la phrase : "${phrase}".
+							Mission : Extraire UNIQUEMENT le nom du plat ajouté.
+							1. Enlève "j'ai mis", "ajoute", "rangé", "au frigo", "dans le frigo".
+							2. Enlève les articles (le, la, les, un, une, des).
+							3. Ne réponds QUE le nom pur, avec une majuscule.
+							Ex: "j'ai mis des pâtes au frigo" -> Pâtes`;
+            const nomAliment = await appelGemini(promptAjout);
+            if (nomAliment.trim().length > 1) {
+                await ajouterAuFrigoVocal(nomAliment.trim());
+            }
+        } catch (err) { console.error(err); }
+        return;
+    }
 
-					// --- 6. SUPPRESSION ---
-					if (phrase.includes("supprime") || phrase.includes("retire") || phrase.includes("enlève")) {
-						try {
-							const { data: produits } = await monSupabase.from('inventaire2').select('*').neq('etat', 'Vide');
-							const promptChoix = `Phrase: "${phrase}". Stock: ${JSON.stringify(produits)}. Trouve l'ID du produit. Réponds uniquement JSON: {"ids": [numéro]}`;
-							const text = await appelGemini({ contents: [{ parts: [{ text: promptChoix }] }] });
-							const res = JSON.parse(text.substring(text.indexOf('{'), text.lastIndexOf('}') + 1));
-							if (res.ids && res.ids.length > 0) {
-								const p = produits.find(x => x.id === res.ids[0]);
-								await executerLogiqueSuppression(p);
-							}
-						} catch (err) { console.error("Erreur suppression :", err); }
-						return;
-					}
-
-				}; // Fin de onresult  <-- C'EST LE SEUL BON ENDROIT !
-			} // Fin de if(recognition) <-- C'EST LE SEUL BON ENDROIT !
+    // --- 5. SUPPRESSION INTELLIGENTE ---
+    if (phrase.includes("supprime") || phrase.includes("retire") || phrase.includes("enlève")) {
+        try {
+           const promptNettoyage = `Tu es un expert en extraction de mots-clés pour une base de données d'inventaire. 
+        Voici la commande vocale de l'utilisateur : "${phrase}".
+        
+        Ta mission : Extraire UNIQUEMENT la "racine" distinctive du produit (la marque ou l'ingrédient principal) pour maximiser les chances de le trouver.
+        
+        Règles STRICTES :
+        1. Supprime les verbes, les articles et les formules de politesse.
+        2. Supprime les mots génériques de catégorie ou d'emballage (yaourt, brassé, nature, bouteille, boîte, paquet, tranche, pot, brique).
+        3. Mets le mot au SINGULIER.
+        4. Garde UNIQUEMENT l'identifiant fort, la marque ou l'ingrédient central.
+        5. NE RÉPONDS QUE LE RÉSULTAT, sans aucune phrase autour.
+        
+        Exemples :
+        - "supprime le yaourt perle de lait" -> perle de lait
+        - "enlève un yaourt brassé perle de lait framboise" -> perle de lait
+        - "retire les bouteilles de coca cola" -> coca cola
+        - "supprime une boîte de haricots verts" -> haricot vert
+        - "enlève les bananes" -> banane`;
+            const motCleParfait = await appelGemini(promptNettoyage);
+            await supprimerProduitVocal(motCleParfait.trim().toLowerCase());
+        } catch (err) { console.error(err); }
+        return;
+    }
+};
 
 			// --- GESTION DES BOUTONS ---
 			const btnVocal = document.getElementById('btn-vocal');
@@ -371,107 +494,137 @@
 								}; // Ferme btnChef.onclick
 						
 							
-								async function scannerTicket(input) {
-									const file = input.files[0];
-									if(!file) return;
-									
-									if (file.size > 4 * 1024 * 1024) {
-										alert("Le fichier est trop lourd (max 4Mo).");
-										return;
-									}
+async function scannerTicket(input) {
+    const file = input.files[0];
+    if(!file) return;
 
-											const statut = document.getElementById('statut-scan');
-											statut.innerText = "⏳ Analyse en cours (PDF/Image)...";
+    const statut = document.getElementById('statut-scan');
+    if (statut) statut.innerText = "⏳ Analyse en cours avec Gemini 2.5...";
 
-											const reader = new FileReader();
-											reader.onload = async () => {
-												try {
-													const base64Data = reader.result.split(',')[1];
-													const mimeType = file.type;
+    const reader = new FileReader();
+    reader.onload = async () => {
+        try {
+            const base64Data = reader.result.split(',')[1];
+            
+            // 1. On récupère la date d'aujourd'hui pour donner un repère à l'IA
+            const aujourdhui = new Date().toISOString().split('T')[0];
 
-													const payload = {
-														contents: [{
-															parts: [
-																{ text: "Tu es un expert en ticket de caisse. Extrais les articles. Emplacements: FRIGO, PLACARD, CONGELATEUR, ANIMAUX, HORS_CUISINE. Réponds UNIQUEMENT le JSON: [{\"nom\":\"...\",\"quantite\":1,\"emplacement\":\"...\"}]" },
-																{ inline_data: { mime_type: mimeType, data: base64Data } }
-															]
-														}],
-														generationConfig: {
-															temperature: 0.1, // On baisse la température pour éviter que l'IA ne divague
-														}
-													};
+            // 2. ON MET À JOUR LE PROMPT POUR DEMANDER LES DATES
+            const payload = {
+                contents: [{
+                    parts: [
+                        { text: `Tu es un expert en ticket de caisse. Extrais les articles. 
+                        Nettoie les noms pour qu'ils soient naturels. 
+                        Emplacements : FRIGO, PLACARD, CONGELATEUR, ANIMAUX, HORS_CUISINE. 
+                        
+                        CONSIGNE SPÉCIALE : 
+                        Pour chaque article du FRIGO, estime une date de péremption (format YYYY-MM-DD) basée sur aujourd'hui (${aujourdhui}).
+                        Exemple : Viande/Poisson +3j, Yaourt +15j, Fromage +30j, Fruits/Légumes +7j.
+                        
+                        Réponds UNIQUEMENT le JSON : [{"nom":"...","quantite":1,"emplacement":"...","peremption":"YYYY-MM-DD"}]` },
+                        { inline_data: { mime_type: file.type, data: base64Data } }
+                    ]
+                }],
+                generationConfig: { temperature: 0.1 } // On garde 0.1 pour être précis sur les noms
+            };
 
-													const text = await appelGemini(payload);
-													traiterRetourGemini(text);
-												} catch(e) {
-													console.error("Détail erreur:", e);
-													statut.innerText = "❌ Le serveur Gemini est saturé (503). Réessayez dans 10 secondes.";
-												}
-											};
-											reader.readAsDataURL(file);
-										}
+            const text = await appelGemini(payload);
+            traiterRetourGemini(text);
+            
+        } catch(e) {
+            console.error("Erreur Gemini 2.5:", e);
+            if (statut) statut.innerText = "❌ Erreur lors de l'analyse.";
+        }
+    };
+    reader.readAsDataURL(file);
+}
+										
 
-										function ouvrirEticket() {
-											const texte = prompt("Collez le ticket :");
-											if(texte) appelGemini({ contents: [{ parts: [{ text: `Ticket: ${texte}. Liste articles, qté, emplacements. JSON STRICT: [{\"nom\":\"...\",\"quantite\":1,\"emplacement\":\"...\"}]` }] }] }).then(traiterRetourGemini).catch(()=>alert("Erreur E-ticket"));
-										}
+										// CHEF (VERSION CORRIGÉE & STABLE)
+async function demanderAuChef() {
+    const pU = document.getElementById('chef-prompt').value;
+    const z = document.getElementById('recette-zone');
+    
+    if(!pU) return;
+    
+    z.innerHTML = "<p style='grid-column:1/3; text-align:center;'>👨‍🍳 Le Chef examine votre stock...</p>";
+    
+    // 1. Récupération du stock depuis Supabase
+    const { data: stock } = await monSupabase.from('inventaire2').select('nom').neq('etat', 'Vide');
+    
+    const ing = stock ? stock.map(s => s.nom).join(', ') : "Rien de spécial";
 
-										async function traiterRetourGemini(text) {
-											try {
-												const articles = JSON.parse(text.substring(text.indexOf('['), text.lastIndexOf(']') + 1));
-												for (let a of articles) {
-													await monSupabase.from('inventaire2').insert([{ nom: a.nom, quantite: a.quantite, emplacement: a.emplacement, etat: 'Plein' }]);
-												}
-												document.getElementById('statut-scan').innerText = "✅ " + articles.length + " articles ajoutés !";
-												chargerTout();
-											} catch(e) { document.getElementById('statut-scan').innerText = "❌ Format invalide."; }
-										}
+    try {
+        // --- ON RÉPARE LE PROMPT ICI ---
+        const promptExpert = `
+        Tu es un Chef cuisinier créatif qui sait s'adapter parfaitement aux besoins.
+        
+        DEMANDE UTILISATEUR : "${pU}"
+        STOCK DISPONIBLE : ${ing}
 
-										// CHEF
-										async function demanderAuChef() {
-											const pU = document.getElementById('chef-prompt').value;
-											const z = document.getElementById('recette-zone');
-											if(!pU) return;
-											
-											z.innerHTML = "<p style='grid-column:1/3; text-align:center;'>👨‍🍳 Chef Gemini 2.5 examine votre stock...</p>";
-											
-											const { data: stock } = await monSupabase.from('inventaire2').select('nom').neq('etat', 'Vide');
-											const ing = stock.map(s => s.nom).join(', ');
+        CONSIGNES DE STYLE :
+        1. RESPECTE l'intention de l'utilisateur : s'il demande "simple", "rapide" ou "peu d'ingrédients", propose des recettes épurées et efficaces (max 5-6 ingrédients).
+        2. Propose 3 idées de plats aux styles culinaires variés (ex: un terroir, un du monde, un moderne).
+        3. Si la demande est vague, sois créatif, mais si la demande est précise (ex: "recette simple"), ne sois pas trop sophistiqué.
+        4. Utilise intelligemment le stock disponible en priorité.
+        5. Présente chaque recette de façon concise : Nom du plat + liste courte d'ingrédients + étape clé.
 
-											try {
-												const promptExpert = `
-												Tu es un Chef cuisinier expert et pragmatique.
-												DEMANDE UTILISATEUR : "${pU}"
-												STOCK DISPONIBLE : ${ing}
+        CONSIGNES DE VARIÉTÉ :
+        - ÉVITE de proposer toujours la même base (alterne féculents, légumes, protéines).
+        - Si l'utilisateur dit "autre chose", change radicalement de direction par rapport aux idées précédentes.
 
-												CONSIGNES STRICTES :
-												1. Ne propose que des plats réalisables AVEC le stock.
-												2. Si l'utilisateur demande un plat précis (ex: "des frites"), respecte la technique (friture) et n'invente pas un substitut (ex: purée) sauf si l'ingrédient principal manque.
-												3. Sois bref et précis.
-												
-												RÉPONDS UNIQUEMENT AU FORMAT JSON : 
-												[{"titre":"Nom du plat", "contenu":"Recette courte en 3 étapes"}]`;
+        RÉPONDS UNIQUEMENT AU FORMAT JSON STRICT (tableau d'objets) : 
+        [{"titre":"Nom du plat original", "contenu":"Recette courte en 3 étapes"}]`;
 
-												const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODEL_25}:generateContent?key=${document.getElementById('gKey').value}`, {
-													method: 'POST',
-													body: JSON.stringify({ contents: [{ parts: [{ text: promptExpert }] }] })
-												});
-												
-												const d = await resp.json();
-												const t = d.candidates[0].content.parts[0].text;
-												recettesTemporaires = JSON.parse(t.substring(t.indexOf('['), t.lastIndexOf(']') + 1));
-												
-												z.innerHTML = recettesTemporaires.map((r, i) => `
-													<div style="background:white; padding:12px; border-radius:12px; border:1px solid #ddd; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-														<b style="color:var(--chef); font-size:14px;">${r.titre}</b>
-														<p style="font-size:12px; margin:10px 0; color:#555;">${r.contenu}</p>
-														<button onclick="sauverRecetteDirect(${i})" style="width:100%; background:var(--mur); color:white; border:none; padding:8px; border-radius:8px; cursor:pointer; font-weight:bold;">💾 SAUVER</button>
-													</div>`).join('');
-											} catch(e) { 
-												z.innerHTML = "<p>❌ Le Chef a eu un petit souci de réflexion. Réessayez.</p>"; 
-											}
-										}
+        // 2. Appel au Relais Cloudflare
+        const urlRelais = "https://gemini-relais.laurent235.workers.dev"; 
 
+        const resp = await fetch(urlRelais, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }, 
+            body: JSON.stringify({ 
+                prompt: promptExpert,
+                temperature: 0.4 
+            }) 
+        });
+
+        if (!resp.ok) {
+            const err = await resp.json();
+            throw new Error(`Erreur API Google (${resp.status}): ${err.error?.message || 'Inconnue'}`);
+        }
+
+        const d = await resp.json();
+        
+        // 3. Extraction et Nettoyage du JSON
+        if (!d.candidates || !d.candidates[0].content) throw new Error("Réponse vide du Chef");
+        
+        let t = d.candidates[0].content.parts[0].text;
+        
+        // Nettoyage des balises Markdown
+        t = t.replace(/```json/g, '').replace(/```/g, '').trim();
+        
+        // Extraction du tableau JSON
+        const jsonStart = t.indexOf('[');
+        const jsonEnd = t.lastIndexOf(']');
+        
+        if (jsonStart === -1 || jsonEnd === -1) throw new Error("Le format JSON reçu est invalide.");
+        
+        // On stocke les recettes pour la fonction de sauvegarde
+        recettesTemporaires = JSON.parse(t.substring(jsonStart, jsonEnd + 1));
+        
+        // 4. Affichage
+        z.innerHTML = recettesTemporaires.map((r, i) => `
+            <div style="background:white; padding:12px; border-radius:12px; border:1px solid #ddd; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom:10px;">
+                <b style="color:var(--chef); font-size:14px;">${r.titre}</b>
+                <p style="font-size:12px; margin:10px 0; color:#555;">${r.contenu}</p>
+                <button onclick="sauverRecetteDirect(${i})" style="width:100%; background:var(--mur); color:white; border:none; padding:8px; border-radius:8px; cursor:pointer; font-weight:bold;">💾 SAUVER</button>
+            </div>`).join('');
+
+    } catch(e) { 
+        console.error(e);
+        z.innerHTML = `<p style="color:red; text-align:center;">❌ Oups : ${e.message}</p>`; 
+    }
+}
 										async function sauverRecetteDirect(i) {
     const r = recettesTemporaires[i];
     
@@ -495,170 +648,300 @@
     }
 }
 
-										// --- FONCTION DE CHARGEMENT PRINCIPALE ---
-										async function chargerTout() {
-											// 1. Récupération des données depuis Supabase
-											const { data: items, error } = await monSupabase.from('inventaire2').select('*').order('nom');
-											
-											if (error) {
-												console.error("Erreur de chargement:", error);
-												return;
-											}
 
-											// 2. Mapping des emplacements vers les IDs HTML
-											const mapping = { 
-												'FRIGO': 'list-Frigo', 
-												'CONGELATEUR': 'list-Congélateur', 
-												'PLACARD': 'list-Placard', 
-												'ANIMAUX': 'list-Animaux', 
-												'HORS_CUISINE': 'list-Maison' 
-											};
-											
-											// 3. Reset (vidage) de toutes les listes avant affichage
-											Object.values(mapping).forEach(id => { 
-												const el = document.getElementById(id);
-												if(el) el.innerHTML = ""; 
-											});
-											
-											const sl = document.getElementById('shoppingList'); 
-											if(sl) sl.innerHTML = "";
+    async function chargerTout() {
+    // 1. On filtre par propriétaire
+    const { data: items, error } = await monSupabase
+        .from('inventaire2')
+        .select('*')
+        .eq('proprietaire', utilisateurActuel) // 👈 LA MAGIE EST ICI
+        .order('nom');
 
-											const lt = document.getElementById('listeTups');
-											if(lt) lt.innerHTML = "";
-											
-											let nbDanger = 0; // Compteur pour le badge rouge Anti-Gaspi
+    if (error) {
+        console.error("Erreur:", error);
+        return;
+    }
 
-											if(!items) return;
+    // 2. Mapping des emplacements vers les IDs HTML
+    const mapping = { 
+        'FRIGO': 'list-Frigo', 
+        'CONGELATEUR': 'list-Congélateur', 
+        'PLACARD': 'list-Placard', 
+        'ANIMAUX': 'list-Animaux', 
+        'HORS_CUISINE': 'list-Maison', 
+        'SALLE_DE_BAIN': 'list-SalleBain', 
+        'AUTRES': 'list-Autres',
+        'TUP': 'listeTups'
+    };
 
-											// 4. Boucle sur chaque article
-											items.forEach(item => {
-												
-												// --- CAS A : LISTE DE COURSES ---
-												if (item.etat === 'Vide') {
-													if(sl) {
-														sl.innerHTML += `
-														<div class="item" style="background:#fff5f5; padding:10px; border-radius:10px; border:1px solid #fed7d7; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;">
-															<span style="font-weight:600; color:#c53030;">🛒 ${item.nom}</span>
-															<div style="display:flex; gap:10px; align-items:center;">
-																<button onclick="copierNom('${item.nom.replace(/'/g, "\\'")}', this)" 
-																		style="background:#4a5568; color:white; border:none; border-radius:6px; padding:6px 12px; cursor:pointer; font-size:13px;">Copier</button>
-																<button onclick="supprimerDefinitif(${item.id})" 
-																		style="background:none; border:none; color:#9b2c2c; cursor:pointer; font-size:20px;">🗑️</button>
-															</div>
-														</div>`;
-													}
-												} 
-												
-												// --- CAS B : TUPPERWARE (ANTI-GASPI) ---
-												else if (item.etat === 'Tup') {
-													if(lt) {
-														const dateEnregistree = new Date(item.emplacement);
-														const aujourdhui = new Date();
-														const joursPasses = Math.floor((aujourdhui - dateEnregistree) / (1000 * 60 * 60 * 24));
+    // 3. Reset (vidage) de toutes les listes
+    Object.values(mapping).forEach(id => { 
+        const el = document.getElementById(id);
+        if(el) el.innerHTML = ""; 
+    });
 
-														let couleur = "#48bb78"; // Vert
-														let msg = "Frais";
-														if (joursPasses >= 3) { couleur = "#ed8936"; msg = "À consommer"; } // Orange
-														if (joursPasses >= 5) { 
-															couleur = "#e53e3e"; 
-															msg = "DANGER"; 
-															nbDanger++; // On compte l'alerte
-														}
+    const sl = document.getElementById('shoppingList'); 
+    if(sl) sl.innerHTML = "";
 
-														lt.innerHTML += `
-														<div class="item" style="border-left: 6px solid ${couleur}; background:white; padding:10px; border-radius:10px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
-															<div>
-																<b style="font-size:14px;">🍱 ${item.nom}</b><br>
-																<small style="color:gray;">Il y a ${joursPasses} jour(s)</small>
-															</div>
-															<div style="display:flex; align-items:center; gap:10px;">
-																<span style="background:${couleur}; color:white; font-size:10px; padding:2px 6px; border-radius:10px; font-weight:bold;">${msg}</span>
-																<button onclick="supprimerDefinitif(${item.id})" style="background:none; border:none; color:#9b2c2c; cursor:pointer; font-size:18px;">🗑️</button>
-															</div>
-														</div>`;
-													}
-												}
+    const lt = document.getElementById('listeTups');
+    if(lt) lt.innerHTML = "";
 
-												// --- CAS C : STOCK CLASSIQUE (FRIGO, PLACARD...) ---
-												else {
-													const container = document.getElementById(mapping[item.emplacement] || 'list-Placard');
-													if(container) {
-														const couleurEtat = item.etat === 'Entamé' ? '#ef6c00' : '#333';
-														const labelEtat = item.etat === 'Entamé' ? '⚠️ Entamé' : '📦 Plein';
+    let nbDanger = 0; 
 
-														container.innerHTML += `
-														<div class="item" style="border-left: 4px solid ${item.etat === 'Entamé' ? '#ef6c00' : '#4a5568'}; padding-left:10px;">
-															<div style="flex:1">
-																<b style="color:${couleurEtat}">${item.nom}</b><br>
-																<small style="cursor:pointer; color:gray;" onclick="basculerEtat(${item.id}, '${item.etat}')">${labelEtat}</small>
-															</div>
-															<div style="display:flex; align-items:center; gap:5px;">
-																<button class="qte-btn" onclick="modifierQuantite(${item.id},${item.quantite},-1)">-</button>
-																<b style="width:25px; text-align:center;">${item.quantite}</b>
-																<button class="qte-btn" onclick="modifierQuantite(${item.id},${item.quantite},1)">+</button>
-																<button onclick="basculerEtat(${item.id}, '${item.etat}')" style="background:none; border:none; font-size:20px; cursor:pointer;">
-																	${item.etat === 'Entamé' ? '🍴' : '🍽️'}
-																</button>
-															</div>
-														</div>`;
-													}
-												}
-											});
+    if(!items) return;
 
-											// 5. Mise à jour du badge d'alerte sur l'onglet
-											const badge = document.getElementById('badge-danger');
-											if (badge) {
-												if (nbDanger > 0) {
-													badge.innerText = nbDanger;
-													badge.style.display = "inline-block";
-												} else {
-													badge.style.display = "none";
-												}
-											}
-										}
+    // 4. Boucle sur chaque article
+    items.forEach(item => {
 
-										async function basculerEtat(id, etatActuel) {
-											const nouvelEtat = (etatActuel === 'Plein') ? 'Entamé' : 'Plein';
-											await monSupabase.from('inventaire2').update({ etat: nouvelEtat }).eq('id', id);
-											chargerTout();
-										}
-										async function modifierQuantite(id, qte, delta) {
-											const nv = qte + delta;
-											if (nv <= 0) {
-												const r = prompt("1-Courses, 2-Supprimer", "1");
-												if (r === "1") await monSupabase.from('inventaire2').update({ etat: 'Vide', quantite: 0 }).eq('id', id);
-												else if (r === "2") await monSupabase.from('inventaire2').delete().eq('id', id);
-											} else { await monSupabase.from('inventaire2').update({ quantite: nv, etat: 'Plein' }).eq('id', id); }
-											chargerTout();
-										}
+        // --- CAS A : LISTE DE COURSES ---
+        if (item.etat === 'Vide') {
+            if(sl) {
+                sl.innerHTML += `
+                <div class="item" style="background:#fff5f5; padding:10px; border-radius:10px; border:1px solid #fed7d7; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;">
+                    <span style="font-weight:600; color:#c53030;">🛒 ${item.nom}</span>
+                    <div style="display:flex; gap:10px; align-items:center;">
+                        <button onclick="copierNom('${item.nom.replace(/'/g, "\\'")}', this)" 
+                                style="background:#4a5568; color:white; border:none; border-radius:6px; padding:6px 12px; cursor:pointer; font-size:13px;">Copier</button>
+                        <button onclick="supprimerDefinitif(${item.id})" 
+                                style="background:none; border:none; color:#9b2c2c; cursor:pointer; font-size:20px;">🗑️</button>
+                    </div>
+                </div>`;
+            }
+        } 
+        // --- CAS B : TUPPERWARE (ANTI-GASPI) ---
+        else if (item.etat === 'Tup') {
+            if(lt) {
+                const dateEnregistree = new Date(item.emplacement);
+                const aujourdhui = new Date();
+                const joursPasses = Math.floor((aujourdhui - dateEnregistree) / (1000 * 60 * 60 * 24));
 
-										async function supprimerDefinitif(id) { if(confirm("Supprimer ?")) { await monSupabase.from('inventaire2').delete().eq('id', id); chargerTout(); } }
+                let couleur = "#48bb78";
+                let msg = "Frais";
+                if (joursPasses >= 3) { couleur = "#ed8936"; msg = "À consommer"; } 
+                if (joursPasses >= 5) { 
+                    couleur = "#e53e3e"; 
+                    msg = "DANGER"; 
+                    nbDanger++; 
+                }
 
-										async function ajouterManuel() {
-											const n = document.getElementById('add-nom').value;
-											const e = document.getElementById('add-emplacement').value;
-											const q = parseInt(document.getElementById('add-qte').value);
-											if(!n) return;
-											await monSupabase.from('inventaire2').insert([{ nom: n, emplacement: e, quantite: q, etat: 'Plein' }]);
-											document.getElementById('add-nom').value = ""; chargerTout();
-										}
+                lt.innerHTML += `
+                <div class="item" style="border-left: 6px solid ${couleur}; background:white; padding:10px; border-radius:10px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                    <div>
+                        <b style="font-size:14px;">🍱 ${item.nom}</b><br>
+                        <small style="color:gray;">Il y a ${joursPasses} jour(s)</small>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <span style="background:${couleur}; color:white; font-size:10px; padding:2px 6px; border-radius:10px; font-weight:bold;">${msg}</span>
+                        <button onclick="supprimerDefinitif(${item.id})" style="background:none; border:none; color:#9b2c2c; cursor:pointer; font-size:18px;">🗑️</button>
+                    </div>
+                </div>`;
+            }
+        }
+        // --- CAS C : STOCK CLASSIQUE ---
+        else {
+            const container = document.getElementById(mapping[item.emplacement] || 'list-Placard');
+            if(container) {
+                const couleurEtat = item.etat === 'Entamé' ? '#ef6c00' : '#333';
+                const labelEtat = item.etat === 'Entamé' ? '⚠️ Entamé' : '📦 Plein';
+                
+                // --- LOGIQUE INDICATEUR FRAÎCHEUR (FRIGO) ---
+                let alerteHtml = "";
+                if (item.date_peremption && item.emplacement === 'FRIGO') {
+                    const aujourdhui = new Date();
+                    const datePerim = new Date(item.date_peremption);
+                    const diff = Math.ceil((datePerim - aujourdhui) / (1000 * 60 * 60 * 24));
 
-										// --- FONCTIONS GRIMOIRE (VERSION UNIQUE ET NETTOYÉE) ---
-										function filtrerGrimoire() {
-											const input = document.getElementById('search-grimoire').value.toLowerCase();
-											const zone = document.getElementById('grimoire-zone');
-											// On récupère les blocs de recettes (ce sont les divs directes dans grimoire-zone)
-											const items = zone.children;
-											
-											for (let i = 0; i < items.length; i++) {
-												const titre = items[i].getElementsByTagName('b')[0];
-												if (titre) {
-													const txt = titre.textContent || titre.innerText;
-													// Si le titre contient le texte tapé, on affiche, sinon on cache
-													items[i].style.display = txt.toLowerCase().indexOf(input) > -1 ? "" : "none";
-												}
-											}
-										}
+                    let icone = "🟢"; 
+                    if (diff <= 1) icone = "🔴"; 
+                    else if (diff <= 3) icone = "🟠"; 
+
+                    alerteHtml = `
+                        <div style="display:flex; align-items:center; gap:5px; margin-top:2px;">
+                            <span title="Date estimée">${icone}</span>
+                            <small style="font-size:10px; color:#718096;">Exp: ${item.date_peremption}</small>
+                            <button onclick="prolongerDate(${item.id}, '${item.date_peremption}')" 
+                                    style="font-size:9px; background:#edf2f7; border:1px solid #cbd5e0; border-radius:3px; padding:0 4px; cursor:pointer; color:#4a5568;">
+                                +2j
+                            </button>
+                        </div>`;
+                }
+
+                const destinations = ['FRIGO', 'CONGELATEUR', 'PLACARD', 'ANIMAUX', 'HORS_CUISINE', 'SALLE_DE_BAIN', 'AUTRES'];
+                const optionsHtml = destinations.map(d => `<option value="${d}" ${d === item.emplacement ? 'selected' : ''}>${d}</option>`).join('');
+
+                container.innerHTML += `
+                <div class="item" style="border-left: 4px solid ${item.etat === 'Entamé' ? '#ef6c00' : '#4a5568'}; padding-left:10px; display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; background:white; padding:10px; border-radius:10px;">
+                    <div style="flex:1">
+                        <b style="color:${couleurEtat}">${item.nom}</b>
+                        ${alerteHtml}
+                        <div style="display:flex; align-items:center; gap:8px; margin-top:4px;">
+                            <select onchange="changerEmplacement(${item.id}, this.value)" style="font-size:10px; border:1px solid #ddd; border-radius:4px; background:#f7fafc; color:#4a5568; cursor:pointer;">
+                                ${optionsHtml}
+                            </select>
+                            <small style="cursor:pointer; color:gray;" onclick="basculerEtat(${item.id}, '${item.etat}')">${labelEtat}</small>
+                        </div>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:5px;">
+                        <button class="qte-btn" onclick="modifierQuantite(${item.id},${item.quantite},-1)">-</button>
+                        <b style="width:25px; text-align:center;">${item.quantite}</b>
+                        <button class="qte-btn" onclick="modifierQuantite(${item.id},${item.quantite},1)">+</button>
+                        <button onclick="basculerEtat(${item.id}, '${item.etat}')" style="background:none; border:none; font-size:20px; cursor:pointer;">
+                            ${item.etat === 'Entamé' ? '🍴' : '🍽️'}
+                        </button>
+                    </div>
+                </div>`;
+            }
+        }
+    });
+
+    // 5. Mise à jour du badge d'alerte
+    const badge = document.getElementById('badge-danger');
+    if (badge) {
+        if (nbDanger > 0) {
+            badge.innerText = nbDanger;
+            badge.style.display = "inline-block";
+        } else {
+            badge.style.display = "none";
+        }
+    }
+
+    // 6. ✨ REMPLISSAGE DES SUGGESTIONS
+    remplirSuggestions();
+}
+
+// ==========================================
+// 1. AJOUT MANUEL (Version Corrigée Multi-Utilisateurs)
+// ==========================================
+async function ajouterManuel() {
+    const nRaw = document.getElementById('add-nom').value;
+    const n = nRaw.trim().replace(/\s+/g, ' '); 
+    
+    const e = document.getElementById('add-emplacement').value;
+    const qInput = document.getElementById('add-qte').value;
+    const q = parseInt(qInput) || 1;
+
+    if (!n) return;
+
+    // --- CORRECTION 1 : On cherche si l'article existe DEJA POUR MOI ---
+    const { data: existant, error } = await monSupabase
+        .from('inventaire2')
+        .select('*')
+        .ilike('nom', n) 
+        .eq('emplacement', e)
+        .eq('proprietaire', utilisateurActuel) // <--- CRUCIAL : seulement mes produits
+        .neq('etat', 'Vide')
+        .maybeSingle();
+
+    if (error) {
+        console.error("Erreur de recherche:", error);
+    }
+
+    if (existant) {
+        // 3. CAS EXISTANT : Addition des quantités
+        const nouvelleQte = (parseInt(existant.quantite) || 0) + q;
+        
+        await monSupabase
+            .from('inventaire2')
+            .update({ 
+                quantite: nouvelleQte, 
+                etat: 'Plein' 
+            })
+            .eq('id', existant.id);
+            
+        console.log(`📈 Fusion réussie pour : ${n} (Nouvelle qté: ${nouvelleQte})`);
+    } else {
+        // --- CORRECTION 2 : On crée le produit EN SIGNANT mon nom ---
+        await monSupabase
+            .from('inventaire2')
+            .insert([{ 
+                nom: n, 
+                emplacement: e, 
+                quantite: q, 
+                etat: 'Plein',
+                proprietaire: utilisateurActuel // <--- CRUCIAL : on marque le produit
+            }]);
+            
+        console.log(`🆕 Nouvel article créé : ${n}`);
+    }
+
+    // 5. Reset du formulaire et rafraîchissement
+    document.getElementById('add-nom').value = "";
+    document.getElementById('add-qte').value = "1";
+    chargerTout();
+}
+
+async function traiterRetourGemini(text) {
+    try {
+        const debut = text.indexOf('[');
+        const fin = text.lastIndexOf(']') + 1;
+        const articles = JSON.parse(text.substring(debut, fin));
+
+        for (let a of articles) {
+            const nomNettoye = a.nom.trim().replace(/\s+/g, ' ');
+            const qteScan = parseInt(a.quantite) || 1;
+            const datePerim = a.peremption || null;
+
+            let query = monSupabase
+                .from('inventaire2')
+                .select('*')
+                .ilike('nom', nomNettoye)
+                .eq('emplacement', a.emplacement)
+                .eq('proprietaire', utilisateurActuel)
+                .neq('etat', 'Vide');
+
+            if (datePerim) {
+                query = query.eq('date_peremption', datePerim);
+            } else {
+                query = query.is('date_peremption', null);
+            }
+
+            const { data: existant } = await query.maybeSingle();
+
+            if (existant) {
+                const nouvelleQte = (parseInt(existant.quantite) || 0) + qteScan;
+                await monSupabase
+                    .from('inventaire2')
+                    .update({ quantite: nouvelleQte, etat: 'Plein' })
+                    .eq('id', existant.id);
+                console.log(`✅ Fusion : ${nomNettoye}`);
+            } else {
+                await monSupabase
+                    .from('inventaire2')
+                    .insert([{ 
+                        nom: nomNettoye, 
+                        quantite: qteScan, 
+                        emplacement: a.emplacement, 
+                        etat: 'Plein',
+                        date_peremption: datePerim,
+                        proprietaire: utilisateurActuel 
+                    }]);
+                console.log(`🆕 Nouveau : ${nomNettoye}`);
+            }
+        }
+
+        document.getElementById('statut-scan').innerText = "✅ " + articles.length + " articles traités !";
+        chargerTout();
+
+    } catch(e) { 
+        console.error("Erreur dans traiterRetourGemini :", e);
+        document.getElementById('statut-scan').innerText = "❌ Erreur de traitement."; 
+    }
+}
+
+// --- 3. SUPPRIMER DÉFINITIF ---
+async function supprimerDefinitif(id) { 
+    if(confirm("Supprimer cet article de la base ?")) { 
+        await monSupabase.from('inventaire2').delete().eq('id', id); 
+        chargerTout(); 
+    } 
+}
+
+// --- 4. BASCULER ÉTAT (Plein / Entamé) ---
+async function basculerEtat(id, etatActuel) {
+    const nouvelEtat = (etatActuel === 'Plein') ? 'Entamé' : 'Plein';
+    await monSupabase.from('inventaire2').update({ etat: nouvelEtat }).eq('id', id);
+    chargerTout();
+}
 
 										async function chargerGrimoire() {
 											const { data, error } = await monSupabase.from('recettes_sauvees').select('*').order('created_at', {ascending: false});
@@ -870,31 +1153,56 @@ async function modifierPlanning(jour, moment, idExistant) {
 						synthese.speak(énoncé);
 					}
 										async function supprimerProduitVocal(nomRecherche) {
-											const { data: produits } = await monSupabase
-												.from('inventaire2')
-												.select('*')
-												.ilike('nom', `%${nomRecherche}%`);
+    // On cherche UNIQUEMENT les produits qui sont en stock (pas les vides)
+    const { data: produits } = await monSupabase
+        .from('inventaire2')
+        .select('*')
+        .neq('etat', 'Vide') // <--- LA LIGNE MAGIQUE EST LÀ
+        .ilike('nom', `%${nomRecherche}%`);
 
-											if (!produits || produits.length === 0) {
-												faireParlerIA("Désolé, je n'ai pas trouvé de " + nomRecherche);
-												window.attenteReponseIA = false;
-												return;
-											}
+    if (!produits || produits.length === 0) {
+        faireParlerIA("Désolé, je n'ai pas trouvé de " + nomRecherche + " dans ton stock actuel.");
+        window.attenteReponseIA = false;
+        return;
+    }
 
-											// CAS 1 : On en trouve un seul
-											if (produits.length === 1) {
-												const p = produits[0];
-												await executerLogiqueSuppression(p);
-											} 
-											// CAS 2 : On en trouve plusieurs
-											else {
-												window.produitsPossibles = produits;
-												window.attenteChoixProduit = true; 
-												let noms = produits.map(x => x.nom).join(" ou ");
-												faireParlerIA("J'ai trouvé plusieurs produits : " + noms + ". Lequel veux-tu retirer ?");
-											}
-										} // <--- FIN DE LA FONCTION
+    // CAS 1 : On en trouve un seul
+    if (produits.length === 1) {
+        const p = produits[0];
+        await executerLogiqueSuppression(p);
+    } 
+    // CAS 2 : On en trouve plusieurs
+    else {
+        window.produitsPossibles = produits;
+        window.attenteChoixProduit = true; 
+        let noms = produits.map(x => x.nom).join(" ou ");
+        faireParlerIA("J'ai trouvé plusieurs correspondances : " + noms + ". Lequel veux-tu retirer ?");
+    }
+}
+// --- FONCTION POUR AJOUTER UN ALIMENT AU FRIGO/TUP ---
+		async function ajouterAuFrigoVocal(nomAliment) {
+			try {
+				const { error } = await monSupabase
+					.from('inventaire2')
+					.insert([
+						{ 
+							nom: nomAliment, 
+							etat: 'Plein',
+							emplacement: 'TUP' // <--- LE CHEF SAIT MAINTENANT OÙ RANGER LE PLAT !
+						} 
+					]);
 
+				if (!error) {
+					faireParlerIA("C'est noté ! J'ai ajouté " + nomAliment + " dans tes restes.");
+					if (typeof chargerTout === "function") chargerTout(); // Ça va rafraîchir et afficher ton plat !
+				} else {
+					console.error("Blocage Supabase :", error);
+					faireParlerIA("Mince, la base de données a refusé de l'enregistrer.");
+				}
+			} catch (err) {
+				console.error("Erreur globale ajout :", err);
+			}
+		}
 										function gererReponseOuiNon(phrase) {
 											if (phrase.includes("oui") || phrase.includes("vas-y") || phrase.includes("ajoute")) {
 												const p = window.dernierProduitSupprime;
@@ -929,7 +1237,113 @@ async function modifierPlanning(jour, moment, idExistant) {
 												// On ne supprime pas encore, on attend le "Oui" pour basculer
 												faireParlerIA("C'était le dernier " + p.nom + ". Veux-tu que je le rajoute à ta liste de courses ?");
 											}
-										}		
+										}	
+										
+function rechercherArticle() {
+    const barre = document.getElementById('mon-filtre-texte');
+    if (!barre) return;
+    
+    const motCle = barre.value.toLowerCase().trim();
+    const tousLesItems = document.querySelectorAll('.item');
+
+    tousLesItems.forEach(ligne => {
+        const texteLigne = ligne.innerText.toLowerCase();
+        if (texteLigne.includes(motCle)) {
+            ligne.style.setProperty('display', 'flex', 'important');
+        } else {
+            ligne.style.setProperty('display', 'none', 'important');
+        }
+    });
+}
+
+
+// ==========================================
+// 3. LA FONCTION SUGGESTIONS (Indépendante)
+// ==========================================
+function remplirSuggestions() {
+    const datalist = document.getElementById('liste-suggestions');
+    const tousLesItems = document.querySelectorAll('.item');
+    if (!datalist) return;
+
+    datalist.innerHTML = ""; 
+    const nomsUniques = new Set();
+
+    tousLesItems.forEach(item => {
+        // On prend la première ligne de texte et on nettoie les emojis
+        let nom = item.innerText.split('\n')[0].replace(/[🛒🗑️✅⚠️]/g, '').trim();
+        if (nom) nomsUniques.add(nom);
+    });
+
+    nomsUniques.forEach(nom => {
+        const option = document.createElement('option');
+        option.value = nom;
+        datalist.appendChild(option);
+    });
+}
+// --- FONCTION DE MODIFICATION DES QUANTITÉS (Version Ergonomique) ---
+async function modifierQuantite(id, qte, delta) {
+    const nv = qte + delta;
+    
+    if (nv <= 0) {
+        // confirm() renvoie true si on clique sur OK, false si on clique sur ANNULER
+        const ajouterAuxCourses = confirm("Article épuisé !\nVoulez-vous l'ajouter à la LISTE DE COURSES ?\n\n(OK = Liste de courses / ANNULER = Supprimer définitivement)");
+        
+        if (ajouterAuxCourses) {
+            // Cas OUI (OK) : On le bascule en état 'Vide'
+            await monSupabase.from('inventaire2')
+                .update({ etat: 'Vide', quantite: 0 })
+                .eq('id', id);
+            console.log("🛒 Article envoyé en liste de courses");
+        } else {
+            // Cas NON (ANNULER) : On le supprime pour de bon
+            await monSupabase.from('inventaire2')
+                .delete()
+                .eq('id', id);
+            console.log("🗑️ Article supprimé définitivement");
+        }
+    } else {
+        // Sinon, mise à jour classique de la quantité
+        await monSupabase.from('inventaire2')
+            .update({ quantite: nv, etat: 'Plein' })
+            .eq('id', id);
+    }
+    
+    // Rafraîchissement de l'interface
+    chargerTout();
+}
+async function changerEmplacement(id, nouvelEmplacement) {
+    const { error } = await monSupabase
+        .from('inventaire2')
+        .update({ emplacement: nouvelEmplacement })
+        .eq('id', id);
+
+    if (!error) {
+        console.log(`🚚 Article ${id} déplacé vers ${nouvelEmplacement}`);
+        chargerTout(); // On rafraîchit pour que l'article change de colonne immédiatement
+    } else {
+        alert("Erreur lors du déplacement de l'article");
+    }
+}
+async function prolongerDate(id, dateActuelle) {
+    // On prend la date actuelle de l'article ou celle d'aujourd'hui
+    let base = dateActuelle ? new Date(dateActuelle) : new Date();
+    
+    // On ajoute 2 jours
+    base.setDate(base.getDate() + 2);
+    const nouvelleDate = base.toISOString().split('T')[0];
+
+    // Mise à jour Supabase
+    const { error } = await monSupabase
+        .from('inventaire2')
+        .update({ date_peremption: nouvelleDate })
+        .eq('id', id);
+
+    if (!error) {
+        console.log(`⏳ Date prolongée au ${nouvelleDate}`);
+        chargerTout(); // On rafraîchit pour voir la couleur changer
+    }
+}
+
 										</script>
 										</body>
 										</html>
