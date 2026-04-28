@@ -1008,29 +1008,30 @@ async function basculerEtat(id, etatActuel) {
 											});
 										}
 										async function ajouterAuMur() {
-											const input = document.getElementById('nouvelArticleFamille');
-											const nom = input.value.trim();
+    const input = document.getElementById('nouvelArticleFamille');
+    const nom = input.value.trim();
 
-											if (nom === "") return; // On n'ajoute pas de vide
+    if (nom === "") return; // On n'ajoute pas de vide
 
-											// On envoie à Supabase
-											const { error } = await monSupabase
-												.from('inventaire2')
-												.insert([{ 
-													nom: nom, 
-													etat: 'Vide', 
-													emplacement: 'PLACARD', // Par défaut
-													quantite: 1 
-												}]);
+    // On envoie à Supabase avec le propriétaire
+    const { error } = await monSupabase
+        .from('inventaire2')
+        .insert([{ 
+            nom: nom, 
+            etat: 'Vide', 
+            emplacement: 'PLACARD', // Par défaut
+            quantite: 1,
+            proprietaire: utilisateurActuel // <--- INDISPENSABLE pour l'afficher après
+        }]);
 
-											if (error) {
-												console.error("Erreur ajout famille:", error);
-												alert("Zut, ça n'a pas marché !");
-											} else {
-												input.value = ""; // On vide le champ
-												chargerTout();    // On rafraîchit la liste pour voir l'article
-											}
-										}
+    if (error) {
+        console.error("Erreur ajout famille:", error);
+        alert("Zut, ça n'a pas marché !");
+    } else {
+        input.value = ""; // On vide le champ
+        chargerTout();    // On rafraîchit la liste pour voir l'article
+    }
+}
 
 										// Optionnel : Permettre d'ajouter en appuyant sur "Entrée"
 										document.getElementById('nouvelArticleFamille')?.addEventListener('keypress', function (e) {
@@ -1179,30 +1180,31 @@ async function modifierPlanning(jour, moment, idExistant) {
         faireParlerIA("J'ai trouvé plusieurs correspondances : " + noms + ". Lequel veux-tu retirer ?");
     }
 }
-// --- FONCTION POUR AJOUTER UN ALIMENT AU FRIGO/TUP ---
-		async function ajouterAuFrigoVocal(nomAliment) {
-			try {
-				const { error } = await monSupabase
-					.from('inventaire2')
-					.insert([
-						{ 
-							nom: nomAliment, 
-							etat: 'Plein',
-							emplacement: 'TUP' // <--- LE CHEF SAIT MAINTENANT OÙ RANGER LE PLAT !
-						} 
-					]);
+// --- FONCTION POUR AJOUTER UN ALIMENT AU FRIGO/TUP (Version Multi-utilisateurs) ---
+async function ajouterAuFrigoVocal(nomAliment) {
+    try {
+        const { error } = await monSupabase
+            .from('inventaire2')
+            .insert([
+                { 
+                    nom: nomAliment, 
+                    etat: 'Plein',
+                    emplacement: 'TUP', 
+                    proprietaire: utilisateurActuel // <--- INDISPENSABLE : On signe le plat !
+                } 
+            ]);
 
-				if (!error) {
-					faireParlerIA("C'est noté ! J'ai ajouté " + nomAliment + " dans tes restes.");
-					if (typeof chargerTout === "function") chargerTout(); // Ça va rafraîchir et afficher ton plat !
-				} else {
-					console.error("Blocage Supabase :", error);
-					faireParlerIA("Mince, la base de données a refusé de l'enregistrer.");
-				}
-			} catch (err) {
-				console.error("Erreur globale ajout :", err);
-			}
-		}
+        if (!error) {
+            faireParlerIA("C'est noté ! J'ai ajouté " + nomAliment + " dans tes restes.");
+            if (typeof chargerTout === "function") chargerTout(); 
+        } else {
+            console.error("Blocage Supabase :", error);
+            faireParlerIA("Mince, la base de données a refusé de l'enregistrer.");
+        }
+    } catch (err) {
+        console.error("Erreur globale ajout :", err);
+    }
+}
 										function gererReponseOuiNon(phrase) {
 											if (phrase.includes("oui") || phrase.includes("vas-y") || phrase.includes("ajoute")) {
 												const p = window.dernierProduitSupprime;
